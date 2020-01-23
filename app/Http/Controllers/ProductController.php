@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Product;
 use Illuminate\Support\Facades\Validator;
 use App\Jobs\ProductImport;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\ProductImport as ImportExcel;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -14,14 +17,32 @@ class ProductController extends Controller
 		return Product::all();
 	}
 
-	public function addProducts($data){
-		$product =  Product::create($data);
+	public function addProducts(){
+		$path = public_path('/upload/excel.xlsx');
+		// return $path;
 
-		echo "Finalizado";
+		$products = Excel::toCollection(new ImportExcel, $path);
+		$data = array();
 
-		return [
-			'status'	=>	'Enviado com sucesso!'
-		];
+		foreach($products[0] as $key) {
+			$product = [
+				'im'				=>	strval($key[0]),
+				'name'				=>	strval($key[1]),
+				'free_shipping'		=>	strval($key[2]),
+				'description'		=>	strval($key[3]),
+				'price'				=>	strval($key[4])
+			];
+
+			if ($key[0] === null || $key[1] === null || $key[2] === null || $key[3] === null || $key[4] === null || $key[0] == 'lm') {
+				continue;
+			}
+			array_push($data, $product);
+
+		}
+
+		DB::table('products')->insert($data);
+		// return;
+		echo 'Enviado com sucesso!';
 	}
 
 	public function store(Request $request)
@@ -42,8 +63,11 @@ class ProductController extends Controller
 			return $validator->errors();
 		}
 
-		// mimes XLSX não estava funcionando, com outra extensão como PDF estava funcionando perfeitamente.
-		// Então preferi verificar assim o arquivo.
+		/*
+			mimes XLSX não estava funcionando, com outra extensão como PDF estava funcionando perfeitamente.
+			Então preferi verificar assim o arquivo.
+		*/
+
 		if ($data['file']->getClientOriginalExtension() != 'xlsx') {
 			return [
 				"file" => [
@@ -52,17 +76,23 @@ class ProductController extends Controller
 			];
 		}
 
-		$dataTime	=	date('Ymd_His');
+		/*
+			As proximas linhas comentadas fazem uma movimentação de imagem, porem prefiro não movimenta-la e usar-la no tmp mesmo.
+		*/
+
 		$file		=	$data['file'];
-		$fileName	=	$dataTime . '-' . $file->getClientOriginalName();
+		$fileName	=	"excel." . $file->getClientOriginalExtension();
 		$savePath	=	public_path('/upload/');
+
+		if (file_exists(public_path('/upload/excel.xlsx'))) {
+			unlink(public_path("/upload/excel.xlsx"));
+		}
+
 		$file->move($savePath, $fileName);
+		// $this->addProducts();
 
-		return [
-			'status'	=>	'Sucesso!'
-		];
+		ProductImport::dispatch($this);
 
-		ProductImport::dispatch($this, $data);
 		return [
 			'status'	=>	'Importando...'
 		];

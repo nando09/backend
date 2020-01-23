@@ -19,10 +19,10 @@ class ProductImport implements ShouldQueue
 	 *
 	 * @return void
 	 */
-	public function __construct(ProductController $productController, $path)
+	public function __construct(ProductController $productController)
 	{
 		$this->productController = $productController;
-		$this->path = $path;
+		// $this->path = $path;
 	}
 
 	/**
@@ -32,7 +32,6 @@ class ProductImport implements ShouldQueue
 	 */
 	public function handle()
 	{
-		sleep(10);
-		$this->productController->addProducts($this->path);
+		$this->productController->addProducts();
 	}
 }

@@ -13,4 +13,6 @@ class Product extends Model
 		'description',
 		'price'
 	];
+
+	public $timestamps = false;
 }

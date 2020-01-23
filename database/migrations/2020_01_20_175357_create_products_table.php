@@ -20,7 +20,6 @@ class CreateProductsTable extends Migration
             $table->enum('free_shipping', [0, 1]);
             $table->string('description');
             $table->decimal('price', 20, 2);
-            $table->timestamps();
         });
     }
 
