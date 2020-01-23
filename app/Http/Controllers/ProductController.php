@@ -28,30 +28,40 @@ class ProductController extends Controller
 	{
 		$data = $request->all();
 
-		// $validator = Validator::make($data, [
-		// 	'im'				=>	['required', 'numeric', 'unique:products'],
-		// 	'name'				=>	['required', 'string'],
-		// 	'free_shipping'		=>	['required', 'boolean'],
-		// 	'description'		=>	['required', 'string'],
-		// 	'price'				=>	['required', 'numeric'],
-		// ],
-		// [
-		// 	'im.required'				=>	"Campo 'im' é obrigatório!",
-		// 	'im.numeric'				=>	"Campo 'im' tem que ser numerico!",
-		// 	'im.unique'					=>	"Já existe esse 'im'!",
-		// 	'name.required'				=>	"Campo 'name' é obrigatório!",
-		// 	'free_shipping.required'	=>	"Campo 'free_shipping' é obrigatório!",
-		// 	'free_shipping.boolean'		=>	"Campo 'free_shipping' tem que ser '0 ou 1'",
-		// 	'description.required'		=>	"Campo 'description' tem que ser boolean",
-		// 	'price.required'			=>	"Campo 'price' é obrigatório!",
-		// 	'price.numeric'				=>	"Campo 'price' tem que ser um preço!",
-		// ]);
+		$validator = Validator::make($data, [
+			// 'file'	=>	['required', 'mimes:application/vnd.ms-excel'],
+			// 'file'	=>	['required', 'mimes:xlsx,xls'],
+			'file'	=>	['required'],
+		],
+		[
+			'file.required'				=>	"Não existe arquivo file!",
+			// 'file.mimes'				=>	"O arquivo tem que ser 'xlsx'!",
+		]);
 
-		// if ($validator->fails()){
-		// 	return $validator->errors();
-		// }
+		if ($validator->fails()){
+			return $validator->errors();
+		}
 
-		// $product =  Product::create($data);
+		// mimes XLSX não estava funcionando, com outra extensão como PDF estava funcionando perfeitamente.
+		// Então preferi verificar assim o arquivo.
+		if ($data['file']->getClientOriginalExtension() != 'xlsx') {
+			return [
+				"file" => [
+							"O arquivo tem que ser 'xlsx'!"
+				]
+			];
+		}
+
+		$dataTime	=	date('Ymd_His');
+		$file		=	$data['file'];
+		$fileName	=	$dataTime . '-' . $file->getClientOriginalName();
+		$savePath	=	public_path('/upload/');
+		$file->move($savePath, $fileName);
+
+		return [
+			'status'	=>	'Sucesso!'
+		];
+
 		ProductImport::dispatch($this, $data);
 		return [
 			'status'	=>	'Importando...'
