@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Product;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Validator;
 
-class ProductController extends Controller
+class ProductController extends Controller implements ShouldQueue
 {
 	public function index()
 	{
@@ -16,6 +17,7 @@ class ProductController extends Controller
 	public function store(Request $request)
 	{
 		$data = $request->all();
+		// sleep(10);
 
 		$validator = Validator::make($data, [
 			'im'				=>	['required', 'numeric', 'unique:products'],
